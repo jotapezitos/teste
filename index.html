@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciador de Projetos</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #ebecf0;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+            transition: margin-left 0.3s ease;
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color: #0079bf;
+            color: #ffffff;
+            position: fixed;
+            height: 100%;
+            overflow: auto;
+            transition: transform 0.3s ease;
+            transform: translateX(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar.hidden {
+            transform: translateX(-100%);
+        }
+
+        .sidebar-content {
+            padding: 15px;
+        }
+
+        .sidebar h2 {
+            margin: 0;
+            padding: 10px;
+            font-size: 18px;
+            border-bottom: 1px solid #005a7f;
+        }
+
+        .sidebar button {
+            background: #005a7f;
+            color: #ffffff;
+            border: none;
+            border-radius: 4px;
+            padding: 10px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .sidebar button:hover {
+            background: #0079bf;
+        }
+
+        .main-content {
+            flex: 1;
+            margin-left: 250px;
+            padding: 20px;
+            transition: margin-left 0.3s ease;
+        }
+
+        .main-content.shifted {
+            margin-left: 0;
+        }
+
+        .board {
+            background: #ffffff;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            max-width: 100%;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .lists {
+            display: flex;
+            overflow-x: auto;
+            padding: 10px 0;
+            gap: 10px;
+            margin-right: 20px;
+        }
+
+        .list {
+            background: #ebecf0;
+            border-radius: 6px;
+            padding: 10px;
+            width: 300px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        .list h2 {
+            margin-top: 0;
+            font-size: 16px;
+            color: #333;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 4px;
+            background: #dfe3e6;
+            position: relative;
+        }
+
+        .list .close-list {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #e03e3e;
+            color: #ffffff;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .list .close-list:hover {
+            background: #c62828;
+        }
+
+        .list input[type="file"] {
+            display: none;
+        }
+
+        .add-card, .add-list {
+            background: #0079bf;
+            color: #ffffff;
+            border: none;
+            border-radius: 4px;
+            padding: 8px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        .add-list {
+            display: none;
+            width: 100%;
+        }
+
+        .add-list.show {
+            display: block;
+        }
+
+        .add-list-button {
+            background: #0079bf;
+            color: #ffffff;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: background 0.3s ease;
+            font-size: 24px;
+            margin-left: 10px;
+        }
+
+        .add-list-button:hover {
+            background: #005a7f;
+        }
+
+        .cards {
+            margin-top: 10px;
+        }
+
+        .card {
+            background: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: move;
+            position: relative;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h3 {
+            margin: 0;
+            font-size: 14px;
+            flex: 1;
+            cursor: text;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .card.completed {
+            background: #d4edda;
+            border-color: #c3e6cb;
+        }
+
+        .card .edit-icon, .card .delete-card {
+            background: #0079bf;
+            border: none;
+            border-radius: 4px;
+            color: #ffffff;
+            cursor: pointer;
+            padding: 4px;
+            font-size: 12px;
+            margin-left: 5px;
+        }
+
+        .card .edit-icon {
+            background: #ffc107;
+        }
+
+        .card .delete-card {
+            background: #e03e3e;
+        }
+
+        .card .edit-icon:hover, .card .delete-card:hover {
+            background: #005a7f;
+        }
+
+        .card .delete-card:hover {
+            background: #c62828;
+        }
+
+        .toggle-sidebar {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            background-color: #0079bf;
+            color: #ffffff;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: opacity 0.3s ease;
+            z-index: 1000;
+        }
+
+        .toggle-sidebar:hover {
+            background-color: #005a7f;
+        }
+
+        .toggle-sidebar.hidden {
+            opacity: 0;
+        }
+
+        .sidebar-icon {
+            font-size: 20px;
+        }
+
+        .task-form {
+            background: #ffffff;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .task-form input, .task-form textarea {
+            width: 100%;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .task-form button {
+            background: #0079bf;
+            color: #ffffff;
+            border: none;
+            border-radius: 4px;
+            padding: 10px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .task-form button:hover {
+            background: #005a7f;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="toggle-sidebar" onclick="toggleSidebar()">
+        <span class="sidebar-icon">☰</span>
+    </div>
+    <div class="container">
+        <div class="sidebar">
+            <div class="sidebar-content">
+                <h2> </h2>
+                <button onclick="openPage('board')">Trello</button>
+                <button onclick="openPage('tasks')">Tarefas</button>
+            </div>
+        </div>
+        <div class="main-content">
+            <div id="board" class="board">
+                <h1 contenteditable="true">Trello</h1>
+                <button class="add-list">Adicionar Lista</button>
+                <div class="lists">
+                    <!-- Listas serão adicionadas aqui -->
+                    <button class="add-list-button" onclick="createList()">+</button>
+                </div>
+            </div>
+            <div id="tasks" class="board" style="display:none;">
+                <h1>Tarefas</h1>
+                <div class="task-form">
+                    <input type="text" id="task-title" placeholder="Título da Tarefa">
+                    <textarea id="task-description" placeholder="Descrição"></textarea>
+                    <input type="date" id="task-due-date" placeholder="Data de Entrega">
+                    <button onclick="addTask()">Adicionar Tarefa</button>
+                </div>
+                <div id="task-list" class="lists">
+                    <!-- Tarefas serão adicionadas aqui -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        let sidebarVisible = true;
+
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            const mainContent = document.querySelector('.main-content');
+            const toggleButton = document.querySelector('.toggle-sidebar');
+
+            if (sidebarVisible) {
+                sidebar.classList.add('hidden');
+                mainContent.classList.add('shifted');
+                toggleButton.classList.add('hidden');
+            } else {
+                sidebar.classList.remove('hidden');
+                mainContent.classList.remove('shifted');
+                toggleButton.classList.remove('hidden');
+            }
+            sidebarVisible = !sidebarVisible;
+        }
+
+        function openPage(pageId) {
+            const pages = document.querySelectorAll('.board');
+            pages.forEach(page => {
+                page.style.display = 'none';
+            });
+            document.getElementById(pageId).style.display = 'block';
+        }
+
+        function createList() {
+            const listsContainer = document.querySelector('.lists');
+            const list = document.createElement('div');
+            list.className = 'list';
+            list.innerHTML = `
+                <button class="close-list" onclick="deleteList(this)">✖</button>
+                <h2 contenteditable="true">Nova Lista</h2>
+                <div class="cards">
+                    <!-- Cards serão adicionados aqui -->
+                </div>
+                <button class="add-card" onclick="createCard(this)">Adicionar Cartão</button>
+            `;
+            listsContainer.insertBefore(list, listsContainer.querySelector('.add-list-button'));
+        }
+
+        function deleteList(button) {
+            button.parentElement.remove();
+        }
+
+        function createCard(button) {
+            const cardsContainer = button.previousElementSibling;
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                <h3 contenteditable="true">Novo Cartão</h3>
+                <button class="edit-icon" onclick="editCard(this)">✏️</button>
+                <button class="delete-card" onclick="deleteCard(this)">❌</button>
+            `;
+            cardsContainer.appendChild(card);
+        }
+
+        function deleteCard(button) {
+            button.parentElement.remove();
+        }
+
+        function editCard(button) {
+            const cardTitle = button.previousElementSibling;
+            const newTitle = prompt('Editar título do cartão', cardTitle.textContent);
+            if (newTitle !== null) {
+                cardTitle.textContent = newTitle;
+            }
+        }
+
+        function addTask() {
+            const title = document.getElementById('task-title').value;
+            const description = document.getElementById('task-description').value;
+            const dueDate = document.getElementById('task-due-date').value;
+            if (title) {
+                const taskList = document.getElementById('task-list');
+                const taskItem = document.createElement('div');
+                taskItem.className = 'card';
+                taskItem.innerHTML = `
+                    <h3>${title}</h3>
+                    <p>${description}</p>
+                    <p>Prazo: ${dueDate}</p>
+                    <button class="edit-icon" onclick="editTask(this)">✏️</button>
+                    <button class="delete-card" onclick="deleteTask(this)">❌</button>
+                `;
+                taskList.appendChild(taskItem);
+                document.getElementById('task-title').value = '';
+                document.getElementById('task-description').value = '';
+                document.getElementById('task-due-date').value = '';
+            }
+        }
+
+        function deleteTask(button) {
+            button.parentElement.remove();
+        }
+
+        function editTask(button) {
+            const taskTitle = button.parentElement.querySelector('h3');
+            const newTitle = prompt('Editar título da tarefa', taskTitle.textContent);
+            if (newTitle !== null) {
+                taskTitle.textContent = newTitle;
+            }
+        }
+    </script>
+</body>
+</html>
+
+
